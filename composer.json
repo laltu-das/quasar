@@ -1,0 +1,78 @@
+{
+    "name": "laltu/quasar",
+    "description": "",
+    "keywords": [
+        "laltu",
+        "quasar"
+    ],
+    "homepage": "https://github.com/laltu/quasar",
+    "license": "MIT",
+    "type": "library",
+    "authors": [
+        {
+            "name": "laltu das",
+            "email": "laltu.lspl@gmail.com",
+            "role": "Developer"
+        }
+    ],
+    "require": {
+        "php": "^8.0|^8.1|^8.2",
+        "ext-zip": "*",
+        "illuminate/support": "^9.21|^10.0|^11.0",
+        "jeremykendall/php-domain-parser": "^6.0"
+    },
+    "require-dev": {
+        "orchestra/testbench": "^7.0|^8.0|^9.0",
+        "phpunit/phpunit": "^9.0|^10."
+    },
+    "autoload": {
+        "psr-4": {
+            "Laltu\\Quasar\\": "src"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Laltu\\Quasar\\Tests\\": "tests",
+            "Workbench\\App\\": "workbench/app/",
+            "Workbench\\Database\\Factories\\": "workbench/database/factories/",
+            "Workbench\\Database\\Seeders\\": "workbench/database/seeders/"
+        }
+    },
+    "scripts": {
+        "test": "vendor/bin/phpunit",
+        "test-coverage": "vendor/bin/phpunit --coverage-html coverage",
+        "post-autoload-dump": [
+            "@clear",
+            "@prepare"
+        ],
+        "clear": "@php vendor/bin/testbench package:purge-skeleton --ansi",
+        "prepare": "@php vendor/bin/testbench package:discover --ansi",
+        "build": "@php vendor/bin/testbench workbench:build --ansi",
+        "serve": [
+            "Composer\\Config::disableProcessTimeout",
+            "@build",
+            "@php vendor/bin/testbench serve"
+        ],
+        "lint": [
+            "@php vendor/bin/phpstan analyse"
+        ]
+    },
+    "config": {
+        "sort-packages": true,
+        "allow-plugins": {
+            "php-http/discovery": true
+        }
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "Laltu\\Quasar\\QuasarServiceProvider"
+            ],
+            "aliases": {
+                "Quasar": "Laltu\\Quasar\\QuasarFacade"
+            }
+        }
+    },
+    "minimum-stability": "dev",
+    "prefer-stable": true
+}

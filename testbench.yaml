@@ -1,0 +1,30 @@
+providers:
+  - Workbench\App\Providers\WorkbenchServiceProvider
+  - Laltu\Quasar\QuasarServiceProvider
+  - Laltu\Quasar\InertiaModalServiceProvider
+
+migrations:
+  - workbench/database/migrations
+
+seeders:
+  - Workbench\Database\Seeders\DatabaseSeeder
+
+workbench:
+  welcome: true,
+  start: '/quaser'
+  install: true
+  health: false
+  discovers:
+    web: true
+    api: false
+    commands: false
+    components: true
+    views: true
+  build:
+    - asset-publish
+    - create-sqlite-db
+    - migrate:refresh
+  assets: []
+  sync:
+    - from: ./public
+      to: public/vendor/quaser
