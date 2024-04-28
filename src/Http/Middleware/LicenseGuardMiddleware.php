@@ -9,37 +9,47 @@ use Pdp\CannotProcessHost;
 
 class LicenseGuardMiddleware
 {
-    /**
-     * @throws CannotProcessHost
-     */
+
     public function handle(Request $request, Closure $next)
     {
-        $host = $request->header('_Host');
-        $hostName = $request->header('_Host_Name');
-
-        if ($host && $hostName) {
-            $domain = DomainSupport::validateDomain($host);
-            $subDomain = $domain->subDomain()->toString();
-
-            if (config('license-server.allow_subdomains') && !empty($subDomain)) {
-                $request->merge([
-                    'domain' => $subDomain,
-                ]);
-
-                return $next($request);
-            }
-
-            $registrableDomain = $domain->registrableDomain()->toString();
-
-            if (!empty($registrableDomain)) {
-                $request->merge([
-                    'domain' => $registrableDomain,
-                ]);
-
-                return $next($request);
-            }
+        if (! $this->validateDomain($request)) {
+            return abort(403, 'Invalid license');
         }
 
-        return abort(403,'Invalid license');
+        return $next($request);
+    }
+
+    /**
+     * Validates the domain and sets it on the request.
+     *
+     * @param Request $request
+     * @return bool
+     */
+    private function validateDomain(Request $request): bool
+    {
+        $host = $request->header('host');
+
+        if (!$host) {
+            return false;
+        }
+
+        $domain = DomainSupport::validateDomain($host);
+        dd($domain);
+        try {
+            $domain = DomainSupport::validateDomain($host);
+            dd($domain);
+
+        } catch (CannotProcessHost $e) {
+            return false;
+        }
+
+        $registrableDomain = $domain->registrableDomain()->toString();
+dd($registrableDomain);
+        if (!empty($registrableDomain)) {
+            $request->merge(['domain' => $registrableDomain]);
+            return true;
+        }
+
+        return false;
     }
 }

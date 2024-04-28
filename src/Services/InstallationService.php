@@ -3,7 +3,6 @@
 namespace Laltu\Quasar\Services;
 
 use Illuminate\Http\Client\ConnectionException;
-use Illuminate\Http\Client\Response;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Crypt;
@@ -51,26 +50,6 @@ class InstallationService
         }
 
         return null;
-    }
-
-    /**
-     * Send encrypted installation data to an API server using a Laravel HTTP client.
-     * This method ensures that the data integrity is maintained during transit.
-     *
-     * @param array $data
-     * @param string $apiUrl
-     * @return Response
-     * @throws ConnectionException
-     */
-    public function sendInstallationDataToAPI(array $data, string $apiUrl): Response
-    {
-        // Encrypt data before sending to API for additional security
-        $encryptedData = Crypt::encryptString(json_encode($data));
-
-        return Http::withHeaders([
-            'Content-Type' => 'application/json',
-            'Accept' => 'application/json',
-        ])->post($apiUrl, ['encrypted_data' => $encryptedData]);
     }
 
     /**

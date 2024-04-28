@@ -2,16 +2,28 @@
 
 namespace Laltu\Quasar\Http\Controllers;
 
+use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Request;
+use Illuminate\Process\Exceptions\ProcessFailedException;
 use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Process;
+use Illuminate\Support\Facades\Storage;
+use Inertia\Inertia;
 use Laltu\Quasar\Services\EnvironmentManager;
 use Laltu\Quasar\Services\InstallationService;
 use Laltu\Quasar\Services\PermissionsChecker;
 use Illuminate\Routing\Controller;
 use Symfony\Component\Console\Output\BufferedOutput;
+use ZipArchive;
 
 class InstallationController extends Controller
 {
+    public function gettingStarted()
+    {
+        return Inertia::render('GettingStarted');
+    }
+
     public function showServerRequirements()
     {
         $requirements = [
@@ -27,55 +39,89 @@ class InstallationController extends Controller
             'XML PHP Extension' => extension_loaded('xml'),
         ];
 
-        return response()->json(['data' => $requirements]);
+        return Inertia::render('ServerRequirements', ['requirements' => $requirements]);
     }
 
     public function showFolderPermissions(PermissionsChecker $permissionsChecker)
     {
-        $permissions = $permissionsChecker->check();
+        $permissions = $permissionsChecker->check(
+            config('installer.permissions')
+        );
 
-        return response()->json(['data' => $permissions]);
+        return Inertia::render('FolderPermissions', $permissions);
     }
 
     public function showEnvironmentVariables(EnvironmentManager $environmentManager)
     {
-        $envVariables = $environmentManager->getEnvContent();
+        $environments = $environmentManager->getEnvContent();
 
-        return response()->json(['data' => $envVariables]);
+        return Inertia::render('EnvironmentVariables', compact('environments'));
     }
 
-    public function downloadProject(Request $request)
+    public function showEnvatoLicense()
     {
-        $output = new BufferedOutput;
-
-        Artisan::call('install:quaser-project', ['token' => $request->token,'envatoItemId' => $request->envatoItemId], $output);
-
-        $content = $output->fetch();
-
-        return response()->json(['data' => $content]);
+        return Inertia::render('EnvatoLicense', [
+            'licenseServerUrl' => config('quasar.license_server_url'),
+        ]);
     }
 
-    public function install(Request $request, InstallationService $installationService)
+    /**
+     * @throws ConnectionException
+     */
+    public function submitEnvatoLicense(Request $request, InstallationService $installationService)
     {
         $request->validate([
-            'app_version' => 'required',
-            'database_name' => 'required',
+            'envatoItemId' => 'required',
+            'licenseKey' => 'required',
+            'environments' => 'nullable',
         ]);
 
-        // Prepare installation details
-        $details = [
-            'app_version' => $request->app_version,
-            'database_name' => $request->database_name,
-            'additional_info' => 'Example of installation metadata.'
-        ];
+        // Attempt to verify the license via external API
+        $response = Http::acceptJson()->post(config('quasar.license_server_url') . "/api/license-verify", [
+            'envatoItemId' =>$request->envatoItemId,
+            'licenseKey' => $request->licenseKey,
+            'version' => config('quasar.version') ,
+        ]);
 
-        // Create or update the installed.lock file
-        $installationService->createInstallationLock($details);
+        if ($response->failed()) {
+            return response()->json($response->json(), 422);
+        }
 
-        // Retrieve the installation data
-        $installationData = $installationService->getInstallationData();
+        // Handling the ZIP file response
+        $zipContent = $response->body();
+        $zipPath = storage_path('app/project-file.zip');
+        Storage::disk('local')->put('project-file.zip', $zipContent);
 
-        return response()->json(['data' => $installationData]);
+        try {
+            $zip = new ZipArchive;
+            if ($zip->open($zipPath) === TRUE) {
+                $zip->extractTo(base_path());
+                $zip->close();
+            } else {
+                throw new \Exception("Failed to open ZIP file for extraction.");
+            }
+        } finally {
+            Storage::disk('local')->delete('project-file.zip');
+        }
+
+        // Prepare installation details and lock installation
+        $installationService->createInstallationLock([]);
+
+        // Run migrations and capture the output
+        $output = $this->runArtisanCommands();
+
+        return redirect()->route('install.installation-progress')->with('success', $output);
+    }
+
+    protected function runArtisanCommands()
+    {
+        $process = Process::run(['php artisan migrate'], base_path());
+
+        if (!$process->successful()) {
+            throw new ProcessFailedException($process);
+        }
+
+        return $process->output();
     }
 
 }

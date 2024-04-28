@@ -6,6 +6,7 @@ use Exception;
 use Illuminate\Contracts\Http\Kernel;
 use Illuminate\Routing\Router;
 use Illuminate\Support\ServiceProvider;
+use Inertia\Inertia;
 use Laltu\Quasar\Commands\InstallQuaserProject;
 use Laltu\Quasar\Http\Middleware\ApplicationInstallMiddleware;
 use Laltu\Quasar\Http\Middleware\ApplicationUpdateMiddleware;
@@ -19,6 +20,7 @@ class QuasarServiceProvider extends ServiceProvider
      */
     public function boot(Kernel $kernel, Router $router): void
     {
+        Inertia::setRootView('quasar::layout');
 
         /*
          * Optional methods to load your package assets
@@ -33,8 +35,6 @@ class QuasarServiceProvider extends ServiceProvider
 //        $kernel->setGlobalMiddleware([LicenseGuardMiddleware::class]);
 
         // Register middleware globally
-//        $kernel->appendMiddlewareToGroup('web', LicenseGuardMiddleware::class);
-
 //        $kernel->appendMiddlewareToGroup('web', ApplicationInstallMiddleware::class);
 //        $kernel->appendMiddlewareToGroup('web', ApplicationUpdateMiddleware::class);
 
@@ -49,9 +49,9 @@ class QuasarServiceProvider extends ServiceProvider
             ], 'views');*/
 
             // Publishing assets.
-            $this->publishes([
-                __DIR__ . '/../public' => public_path('vendor/quasar'),
-            ], ['assets', 'laravel-assets']);
+//            $this->publishes([
+//                __DIR__ . '/../public' => public_path('vendor/quasar'),
+//            ], ['assets', 'laravel-assets']);
 
             // Publishing the translation files.
             /*$this->publishes([
@@ -68,7 +68,7 @@ class QuasarServiceProvider extends ServiceProvider
     /**
      * Register the application services.
      */
-    public function register()
+    public function register(): void
     {
         // Automatically apply the package configuration
         $this->mergeConfigFrom(__DIR__ . '/../config/config.php', 'quasar');

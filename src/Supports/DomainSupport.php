@@ -40,7 +40,7 @@ class DomainSupport
     }
 
     /**
-     * Check if the tld domain list cache is up to date.
+     * Check if the tld domain list cache is up-to-date.
      */
     public static function checkTldCache(): bool
     {

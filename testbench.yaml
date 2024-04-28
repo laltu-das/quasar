@@ -1,7 +1,6 @@
 providers:
-  - Workbench\App\Providers\WorkbenchServiceProvider
   - Laltu\Quasar\QuasarServiceProvider
-  - Laltu\Quasar\InertiaModalServiceProvider
+  - Workbench\App\Providers\WorkbenchServiceProvider
 
 migrations:
   - workbench/database/migrations

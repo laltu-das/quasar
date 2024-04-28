@@ -16,6 +16,7 @@ class IndexController
         return view('quasar::layout', [
             'quasarScriptVariables' => [
                 'appName' => config('app.name'),
+                'licenseServerUrl' => config('quasar.license_server_url'),
             ],
         ]);
     }

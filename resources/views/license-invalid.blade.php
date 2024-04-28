@@ -1,1 +1,0 @@
-<p>license.invalid</p>

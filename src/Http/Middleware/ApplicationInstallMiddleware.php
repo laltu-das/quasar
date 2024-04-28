@@ -4,10 +4,10 @@ namespace Laltu\Quasar\Http\Middleware;
 
 use Closure;
 use Exception;
+use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Laltu\Quasar\Services\InstallationService;
-use Log;
 
 class ApplicationInstallMiddleware
 {
@@ -17,6 +17,7 @@ class ApplicationInstallMiddleware
      * @param Request $request
      * @param Closure $next
      * @return mixed
+     * @throws ConnectionException
      */
     public function handle(Request $request, Closure $next)
     {
@@ -24,17 +25,11 @@ class ApplicationInstallMiddleware
         $installationFlag = 'installed.lock';
         $installationService = new InstallationService();
 
-        try {
-            // Check if the application is installed by looking for the 'installed.lock' file
-            if (!Storage::exists($installationFlag) && !$installationService->validateInstallation()) {
-                // If the 'installed.lock' file does not exist, redirect to an installation route
-                return redirect('/install');
-            }
-        } catch (Exception $e) {
-            // Log the error or handle it as required
-            // For now, we will log and redirect to a generic error page or maintenance page
-//            Log::error('Failed to access the installation check file: ' . $e->getMessage());
-            return response()->view('errors.maintenance', [], 503);
+
+        // Check if the application is installed by looking for the 'installed.lock' file
+        if (!Storage::exists($installationFlag) && !$installationService->validateInstallation()) {
+            // If the 'installed.lock' file does not exist, redirect to an installation route
+            return redirect('/install');
         }
 
         // If the application is installed, continue with the request
