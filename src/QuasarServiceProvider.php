@@ -7,7 +7,7 @@ use Illuminate\Contracts\Http\Kernel;
 use Illuminate\Routing\Router;
 use Illuminate\Support\ServiceProvider;
 use Inertia\Inertia;
-use Laltu\Quasar\Commands\InstallQuaserProject;
+use Laltu\Quasar\Commands\InstallEnvatoProject;
 use Laltu\Quasar\Http\Middleware\ApplicationInstallMiddleware;
 use Laltu\Quasar\Http\Middleware\ApplicationUpdateMiddleware;
 use Laltu\Quasar\Http\Middleware\LicenseGuardMiddleware;
@@ -61,7 +61,7 @@ class QuasarServiceProvider extends ServiceProvider
 
         // Registering package commands.
         $this->commands([
-            InstallQuaserProject::class
+            InstallEnvatoProject::class
         ]);
     }
 

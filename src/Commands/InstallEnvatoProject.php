@@ -2,61 +2,76 @@
 
 namespace Laltu\Quasar\Commands;
 
-use Illuminate\Contracts\Console\PromptsForMissingInput;
-use Illuminate\Support\Facades\Http;
-use Illuminate\Support\Facades\Process;
 use Illuminate\Console\Command;
-use Illuminate\Support\Str;
+use Illuminate\Contracts\Console\PromptsForMissingInput;
 use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
+use Symfony\Component\Process\Exception\ProcessFailedException;
+use Symfony\Component\Process\Process;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputOption;
 
-class InstallQuaserProject extends Command implements PromptsForMissingInput
+class InstallEnvatoProject extends Command implements PromptsForMissingInput
 {
-    protected $name = 'install:quaser-project';
+    protected $name = 'install:envato-project';
 
     protected $description = 'Downloads and installs a project from Envato given a purchase code.';
 
     public function handle(): void
     {
         try {
-
-            $this->verifyEnvatoLicense();
-
-            $this->info('Quasar project installation complete!');
-
+            $progressBar = $this->output->createProgressBar();
+//
+            $progressBar->start();
+            $this->verifyLicenseAndDownload();
+            $progressBar->finish();
+            $this->info('Project installation complete!');
         } catch (\Exception $e) {
             $this->error("Installation failed: {$e->getMessage()}");
         }
     }
 
-
-    private function verifyEnvatoLicense(): void
+    private function verifyLicenseAndDownload(): void
     {
-        $response = Http::acceptJson()->post(config('quasar.license_server_url')."/api/license-verify", [
+        $response = Http::acceptJson()->post("https://support.scriptspheres.com/api/license-verify", [
             'envatoItemId' => $this->argument('envato-item-id'),
             'licenseKey' => $this->argument('envato-purchase-code'),
+            'version' => config('quasar.version'),
         ]);
 
         if (!$response->successful()) {
-            $this->error("API call error: {$response->json('message')}"); // Assuming API error message
+            $this->error("Error: {$response->json('message')}");
             return;
         }
 
-        // Additional validation of the API response if needed
-        $this->info($response->json('message'));
 
+        $this->downloadFile($response);
     }
 
-
-    private function runShellCommands(array $commands): void
+    private function downloadFile($response): void
     {
-        foreach ($commands as $command) {
+        $filePath = "project/project.zip";
 
-            $process = Process::run($command);
+        Storage::disk('local')->put($filePath, $response->body());
 
-            $this->info($process->output());
-        }
+        $this->info('File downloaded and saved successfully.');
+
+        $this->extractZipFile($filePath);
+    }
+
+    private function extractZipFile($zipFilePath): void
+    {
+        $fullZipPath = storage_path('app/' . $zipFilePath);
+
+        Process::fromShellCommandline("unzip -o $fullZipPath -d " . base_path());
+
+        $this->info('Extracting file...');
+
+        $this->info('File extracted successfully.');
+
+        Storage::disk('local')->delete($zipFilePath);
     }
 
     /**
@@ -82,7 +97,6 @@ class InstallQuaserProject extends Command implements PromptsForMissingInput
         return [
             ['envato-item-id', InputArgument::REQUIRED, 'Envato Item ID'],
             ['envato-purchase-code', InputArgument::REQUIRED, 'Envato Purchase Code'],
-            ['version', InputArgument::REQUIRED, 'Envato Purchase Code'],
         ];
     }
 
