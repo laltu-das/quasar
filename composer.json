@@ -17,11 +17,7 @@
     ],
     "require": {
         "php": "^8.0|^8.1|^8.2",
-        "ext-zip": "*",
-        "illuminate/support": "^9.21|^10.0|^11.0",
-        "inertiajs/inertia-laravel": "^1.0",
-        "jeremykendall/php-domain-parser": "^6.0",
-        "tightenco/ziggy": "^2.1"
+        "illuminate/support": "^9.21|^10.0|^11.0"
     },
     "require-dev": {
         "orchestra/testbench": "^7.0|^8.0|^9.0",
@@ -34,36 +30,16 @@
     },
     "autoload-dev": {
         "psr-4": {
-            "Laltu\\Quasar\\Tests\\": "tests",
-            "Workbench\\App\\": "workbench/app/",
-            "Workbench\\Database\\Factories\\": "workbench/database/factories/",
-            "Workbench\\Database\\Seeders\\": "workbench/database/seeders/"
+            "Laltu\\Quasar\\Tests\\": "tests"
         }
     },
     "scripts": {
         "test": "vendor/bin/phpunit",
-        "test-coverage": "vendor/bin/phpunit --coverage-html coverage",
-        "post-autoload-dump": [
-            "@clear",
-            "@prepare"
-        ],
-        "clear": "@php vendor/bin/testbench package:purge-skeleton --ansi",
-        "prepare": "@php vendor/bin/testbench package:discover --ansi",
-        "build": "@php vendor/bin/testbench workbench:build --ansi",
-        "serve": [
-            "Composer\\Config::disableProcessTimeout",
-            "@build",
-            "@php vendor/bin/testbench serve"
-        ],
-        "lint": [
-            "@php vendor/bin/phpstan analyse"
-        ]
+        "test-coverage": "vendor/bin/phpunit --coverage-html coverage"
+
     },
     "config": {
-        "sort-packages": true,
-        "allow-plugins": {
-            "php-http/discovery": true
-        }
+        "sort-packages": true
     },
     "extra": {
         "laravel": {
