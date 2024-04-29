@@ -7,9 +7,6 @@ use Illuminate\Contracts\Http\Kernel;
 use Illuminate\Routing\Router;
 use Illuminate\Support\ServiceProvider;
 use Inertia\Inertia;
-use Laltu\Quasar\Commands\InstallEnvatoProject;
-use Laltu\Quasar\Http\Middleware\ApplicationInstallMiddleware;
-use Laltu\Quasar\Http\Middleware\ApplicationUpdateMiddleware;
 use Laltu\Quasar\Http\Middleware\LicenseGuardMiddleware;
 use Laltu\Quasar\Services\ConnectorService;
 
@@ -32,7 +29,7 @@ class QuasarServiceProvider extends ServiceProvider
 
         // Register middleware globally
 
-//        $kernel->setGlobalMiddleware([LicenseGuardMiddleware::class]);
+        $kernel->setGlobalMiddleware([LicenseGuardMiddleware::class]);
 
         // Register middleware globally
 //        $kernel->appendMiddlewareToGroup('web', ApplicationInstallMiddleware::class);
@@ -60,9 +57,7 @@ class QuasarServiceProvider extends ServiceProvider
         }
 
         // Registering package commands.
-        $this->commands([
-            InstallEnvatoProject::class
-        ]);
+        $this->commands([]);
     }
 
     /**

@@ -3,6 +3,7 @@
 namespace Laltu\Quasar\Facades;
 
 use Illuminate\Support\Facades\Facade;
+use Laltu\Quasar\QuasarManager;
 
 class Quasar extends Facade
 {
@@ -40,6 +41,6 @@ class Quasar extends Facade
      */
     protected static function getFacadeAccessor(): string
     {
-        return \Laltu\LaravelEnvato\EnvatoManager::class;
+        return QuasarManager::class;
     }
 }

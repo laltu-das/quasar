@@ -47,16 +47,13 @@ class Modal implements Responsable
 
     public function render(): mixed
     {
-        /** @phpstan-ignore-next-line */
         inertia()->share(['modal' => $this->component()]);
 
         // render background component on first visit
         if (request()->header('X-Inertia') && request()->header('X-Inertia-Partial-Component')) {
-            /** @phpstan-ignore-next-line */
             return inertia()->render(request()->header('X-Inertia-Partial-Component'));
         }
 
-        /** @var Request $originalRequest */
         $originalRequest = app('request');
 
         $request = Request::create(
@@ -69,7 +66,6 @@ class Modal implements Responsable
             $originalRequest->getContent()
         );
 
-        /** @var \Illuminate\Routing\Router */
         $router = app('router');
 
         $baseRoute = $router->getRoutes()->match($request);
@@ -88,7 +84,6 @@ class Modal implements Responsable
 
     protected function handleRoute(Request $request, Route $route): mixed
     {
-        /** @var \Illuminate\Routing\Router */
         $router = app('router');
 
         $middleware = new SubstituteBindings($router);
