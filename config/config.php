@@ -8,9 +8,17 @@ return [
     |--------------------------------------------------------------------------
     |
     */
-    'item_id' => env('ENVATO_ITEM_ID'),
+    'envato_item_id' => '',
 
-    'purchase_code' => env('ENVATO_PURCHASE_CODE'),
+    'envato_purchase_code' => '',
 
-    'version' => '1',
+    /*
+    |--------------------------------------------------------------------------
+    | Script Spheres Credentials
+    |--------------------------------------------------------------------------
+    |
+    */
+    'scriptspheres_key' => '',
+
+    'scriptspheres_secret' => '',
 ];

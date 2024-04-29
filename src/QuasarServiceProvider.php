@@ -4,11 +4,14 @@ namespace Laltu\Quasar;
 
 use Exception;
 use Illuminate\Contracts\Http\Kernel;
+use Illuminate\Contracts\Support\Arrayable;
 use Illuminate\Routing\Router;
 use Illuminate\Support\ServiceProvider;
 use Inertia\Inertia;
+use Inertia\Response;
+use Inertia\ResponseFactory;
 use Laltu\Quasar\Http\Middleware\LicenseGuardMiddleware;
-use Laltu\Quasar\Services\ConnectorService;
+use Laltu\Quasar\Services\LicenseChecker;
 
 class QuasarServiceProvider extends ServiceProvider
 {
@@ -18,6 +21,18 @@ class QuasarServiceProvider extends ServiceProvider
     public function boot(Kernel $kernel, Router $router): void
     {
         Inertia::setRootView('quasar::layout');
+
+        ResponseFactory::macro('modal', function (string $component, array|Arrayable $props = []) {
+            return new Modal($component, $props);
+        });
+
+        ResponseFactory::macro('dialog', function (string $component, array|Arrayable $props = []) {
+            return new Modal($component, $props);
+        });
+
+        Response::macro('stackable', function () {
+            return new Modal($this->component, $this->props);
+        });
 
         /*
          * Optional methods to load your package assets
@@ -29,7 +44,7 @@ class QuasarServiceProvider extends ServiceProvider
 
         // Register middleware globally
 
-        $kernel->setGlobalMiddleware([LicenseGuardMiddleware::class]);
+//        $kernel->setGlobalMiddleware([LicenseGuardMiddleware::class]);
 
         // Register middleware globally
 //        $kernel->appendMiddlewareToGroup('web', ApplicationInstallMiddleware::class);
@@ -83,8 +98,8 @@ class QuasarServiceProvider extends ServiceProvider
                 throw new Exception("License key is not set in the configuration.");
             }
 
-            // Return a new instance of ConnectorService with the license key
-            return new ConnectorService($licenseKey);
+            // Return a new instance of LicenseChecker with the license key
+            return new LicenseChecker($licenseKey);
         });
 
     }
