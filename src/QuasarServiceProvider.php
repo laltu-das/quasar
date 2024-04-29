@@ -28,7 +28,7 @@ class QuasarServiceProvider extends ServiceProvider
         $this->loadTranslationsFrom(__DIR__ . '/../resources/lang', 'quasar');
         $this->loadViewsFrom(__DIR__ . '/../resources/views', 'quasar');
         $this->loadMigrationsFrom(__DIR__ . '/../database/migrations');
-        $this->loadRoutesFrom(__DIR__ . '/routes.php');
+        $this->loadRoutesFrom(__DIR__ . '/../routes/web.php');
 
         // Register middleware globally
 
@@ -40,7 +40,7 @@ class QuasarServiceProvider extends ServiceProvider
 
         if ($this->app->runningInConsole()) {
             $this->publishes([
-                __DIR__ . '/../config/config.php' => config_path('routes.php'),
+                __DIR__ . '/../config/config.php' => config_path('envato.php'),
             ], 'config');
 
             // Publishing the views.
@@ -71,7 +71,7 @@ class QuasarServiceProvider extends ServiceProvider
     public function register(): void
     {
         // Automatically apply the package configuration
-        $this->mergeConfigFrom(__DIR__ . '/../config/config.php', 'quasar');
+        $this->mergeConfigFrom(__DIR__ . '/../config/config.php', 'envato');
 
         // Register the main class to use with the facade
         $this->app->singleton('quasar', function () {

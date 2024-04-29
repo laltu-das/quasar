@@ -35,9 +35,9 @@ class InstallEnvatoProject extends Command implements PromptsForMissingInput
     private function verifyLicenseAndDownload(): void
     {
         $response = Http::acceptJson()->post("https://support.scriptspheres.com/api/license-verify", [
-            'envatoItemId' => $this->argument('envato-item-id'),
-            'licenseKey' => $this->argument('envato-purchase-code'),
-            'version' => config('quasar.version'),
+            'envatoItemId' => config('envato.item_id')??$this->argument('envato-item-id'),
+            'licenseKey' => config('envato.purchase_code')??$this->argument('envato-purchase-code'),
+            'version' => config('envato.version'),
         ]);
 
         if (!$response->successful()) {
