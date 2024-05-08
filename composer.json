@@ -18,6 +18,7 @@
     "require": {
         "php": "^8.0|^8.1|^8.2",
         "illuminate/support": "^9.21|^10.0|^11.0",
+        "inertiajs/inertia-laravel": "^1.0",
         "nwidart/laravel-modules": "*"
     },
     "require-dev": {
@@ -40,7 +41,10 @@
 
     },
     "config": {
-        "sort-packages": true
+        "sort-packages": true,
+        "allow-plugins": {
+            "wikimedia/composer-merge-plugin": true
+        }
     },
     "extra": {
         "laravel": {

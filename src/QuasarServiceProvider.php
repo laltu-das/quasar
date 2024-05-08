@@ -10,8 +10,10 @@ use Illuminate\Support\ServiceProvider;
 use Inertia\Inertia;
 use Inertia\Response;
 use Inertia\ResponseFactory;
-use Laltu\Quasar\Http\Middleware\LicenseGuardMiddleware;
+use Laltu\Quasar\Console\FilepondClear;
 use Laltu\Quasar\Services\LicenseChecker;
+use Illuminate\Validation\Rule;
+use Laltu\Quasar\Rules\FilepondRule;
 
 class QuasarServiceProvider extends ServiceProvider
 {
@@ -42,6 +44,10 @@ class QuasarServiceProvider extends ServiceProvider
         $this->loadMigrationsFrom(__DIR__ . '/../database/migrations');
         $this->loadRoutesFrom(__DIR__ . '/../routes/web.php');
 
+        Rule::macro('filepond', function ($args) {
+            return new FilepondRule($args);
+        });
+
         // Register middleware globally
 
 //        $kernel->setGlobalMiddleware([LicenseGuardMiddleware::class]);
@@ -52,7 +58,7 @@ class QuasarServiceProvider extends ServiceProvider
 
         if ($this->app->runningInConsole()) {
             $this->publishes([
-                __DIR__ . '/../config/config.php' => config_path('envato.php'),
+                __DIR__ . '/../config/quasar.php' => config_path('envato.php'),
             ], 'config');
 
             // Publishing the views.
@@ -61,18 +67,20 @@ class QuasarServiceProvider extends ServiceProvider
             ], 'views');*/
 
             // Publishing assets.
-//            $this->publishes([
-//                __DIR__ . '/../public' => public_path('vendor/quasar'),
-//            ], ['assets', 'laravel-assets']);
+            $this->publishes([
+                __DIR__ . '/../public' => public_path('vendor/quasar'),
+            ], ['assets', 'laravel-assets']);
 
             // Publishing the translation files.
             /*$this->publishes([
                 __DIR__.'/../resources/lang' => resource_path('lang/vendor/quasar'),
             ], 'lang');*/
-        }
 
-        // Registering package commands.
-        $this->commands([]);
+            // Registering package commands.
+            $this->commands([
+                FilepondClear::class,
+            ]);
+        }
     }
 
     /**
@@ -81,7 +89,7 @@ class QuasarServiceProvider extends ServiceProvider
     public function register(): void
     {
         // Automatically apply the package configuration
-        $this->mergeConfigFrom(__DIR__ . '/../config/config.php', 'envato');
+        $this->mergeConfigFrom(__DIR__ . '/../config/quasar.php', 'envato');
 
         // Register the main class to use with the facade
         $this->app->singleton('quasar', function () {
@@ -100,6 +108,10 @@ class QuasarServiceProvider extends ServiceProvider
 
             // Return a new instance of LicenseChecker with the license key
             return new LicenseChecker($licenseKey);
+        });
+
+        $this->app->singleton('filepond', function () {
+            return new FilepondManager();
         });
 
     }
