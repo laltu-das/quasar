@@ -4,15 +4,14 @@ namespace Laltu\Quasar\Services;
 
 use Exception;
 use Illuminate\Http\Client\ConnectionException;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
+use Laltu\Quasar\Concerns\CacheKeys;
 use Laltu\Quasar\Exceptions\IpAddressNotFoundException;
 use Laltu\Quasar\Exceptions\LicenseException;
-use Laltu\Quasar\Traits\CacheKeys;
 use Pdp\CannotProcessHost;
 
 class LicenseChecker

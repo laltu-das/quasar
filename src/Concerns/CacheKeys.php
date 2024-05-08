@@ -1,6 +1,6 @@
 <?php
 
-namespace Laltu\Quasar\Traits;
+namespace Laltu\Quasar\Concerns;
 
 trait CacheKeys
 {
