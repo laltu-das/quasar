@@ -3,17 +3,18 @@
 namespace Laltu\Quasar\Facades;
 
 use Illuminate\Support\Facades\Facade;
+use Laltu\Quasar\FilepondManager;
 
 /**
- * @method static \Laltu\Quasar\FilepondManager field(string|array $field, bool $checkOwnership = true)
- * @method static \Laltu\Quasar\FilepondManager getFile()
- * @method static \Laltu\Quasar\FilepondManager getModel()
- * @method static \Laltu\Quasar\FilepondManager getDataURL()
- * @method static \Laltu\Quasar\FilepondManager copyTo(string $path, string $disk = '', string $visibility = '')
- * @method static \Laltu\Quasar\FilepondManager moveTo(string $path, string $disk = '', string $visibility = '')
- * @method static \Laltu\Quasar\FilepondManager delete()
+ * @method static FilepondManager field(string|array $field, bool $checkOwnership = true)
+ * @method static FilepondManager getFile()
+ * @method static FilepondManager getModel()
+ * @method static FilepondManager getDataURL()
+ * @method static FilepondManager copyTo(string $path, string $disk = '', string $visibility = '')
+ * @method static FilepondManager moveTo(string $path, string $disk = '', string $visibility = '')
+ * @method static FilepondManager delete()
  *
- * @see \Laltu\Quasar\FilepondManager
+ * @see FilepondManager
  */
 class Filepond extends Facade
 {
@@ -22,8 +23,8 @@ class Filepond extends Facade
      *
      * @return string
      */
-    protected static function getFacadeAccessor()
+    protected static function getFacadeAccessor(): string
     {
-        return 'filepond';
+        return FilepondManager::class;
     }
 }

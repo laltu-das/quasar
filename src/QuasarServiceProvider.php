@@ -58,7 +58,7 @@ class QuasarServiceProvider extends ServiceProvider
 
         if ($this->app->runningInConsole()) {
             $this->publishes([
-                __DIR__ . '/../config/quasar.php' => config_path('envato.php'),
+                __DIR__ . '/../config/quasar.php' => config_path('quasar.php'),
             ], 'config');
 
             // Publishing the views.
@@ -67,9 +67,9 @@ class QuasarServiceProvider extends ServiceProvider
             ], 'views');*/
 
             // Publishing assets.
-            $this->publishes([
-                __DIR__ . '/../public' => public_path('vendor/quasar'),
-            ], ['assets', 'laravel-assets']);
+//            $this->publishes([
+//                __DIR__ . '/../public' => public_path('vendor/quasar'),
+//            ], ['assets', 'laravel-assets']);
 
             // Publishing the translation files.
             /*$this->publishes([
