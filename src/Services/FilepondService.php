@@ -14,14 +14,12 @@ class FilepondService
     private $disk;
     private $tempDisk;
     private $tempFolder;
-    private $model;
 
     public function __construct()
     {
         $this->disk = config('filepond.disk', 'public');
         $this->tempDisk = config('filepond.temp_disk', 'local');
         $this->tempFolder = config('filepond.temp_folder', 'filepond/temp');
-        $this->model = config('filepond.model', Filepond::class);
     }
 
     public function validator(Request $request, array $rules)
@@ -35,7 +33,7 @@ class FilepondService
     {
         $file = $request->file(array_key_first(Arr::dot($request->all())));
 
-        $filepond = $this->model::create([
+        $filepond = Filepond::create([
             'filepath' => $file->store($this->tempFolder, $this->tempDisk),
             'filename' => $file->getClientOriginalName(),
             'extension' => $file->getClientOriginalExtension(),
@@ -50,7 +48,7 @@ class FilepondService
 
     public function initChunk(): string
     {
-        $filepond = $this->model::create([
+        $filepond = Filepond::create([
             'filepath' => '', 'filename' => '', 'extension' => '', 'mimetypes' => '',
             'disk' => $this->disk, 'created_by' => auth()->id(), 'expires_at' => now()->addMinutes(config('filepond.expiration', 30))
         ]);
@@ -69,7 +67,7 @@ class FilepondService
 
         $this->consolidateChunks($dir, $filename, $request->header('Upload-Length'));
 
-        $filepond = $this->model::where('id', $id)->firstOrFail();
+        $filepond = Filepond::where('id', $id)->firstOrFail();
         $filepath = $this->tempFolder . '/' . $id . '/' . $filename;
         $filepond->update([
             'filepath' => $filepath,
@@ -99,7 +97,7 @@ class FilepondService
 
     public function retrieve(string $content)
     {
-        return $this->model::findOrFail(Crypt::decrypt($content)['id']);
+        return Filepond::findOrFail(Crypt::decrypt($content)['id']);
     }
 
     public function delete(Filepond $filepond): ?bool

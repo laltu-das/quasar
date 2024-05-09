@@ -13,46 +13,35 @@ class FilepondManager
     private $tempDisk;
     private $isMultipleUpload;
     private $fieldModel;
-    private $isOwnershipAware;
     private $isSoftDeletable;
 
-    public function setTempDisk(string $tempDisk): self
+    public function __construct()
     {
-        $this->tempDisk = $tempDisk;
+        $this->tempDisk = config('filepond.temp_disk', 'local');
+        $this->isSoftDeletable = config('filepond.soft_delete', true);
+    }
+
+    public function field($field): self
+    {
+        $this->fieldValue = $field ? array_map([$this, 'decrypt'], (array) $field) : null;
+        $this->isMultipleUpload = is_array($field);
+        $this->fieldModel = $this->loadFieldModel();
         return $this;
     }
 
-    protected function setFieldValue($fieldValue): self
-    {
-        $this->fieldValue = $fieldValue ? array_map([$this, 'decrypt'], (array) $fieldValue) : null;
-        $this->isMultipleUpload = is_array($fieldValue);
-        return $this;
-    }
-
-    protected function decrypt(string $data)
+    private function decrypt($data)
     {
         return Crypt::decrypt($data, true);
     }
 
-    protected function getFieldModel()
+    private function loadFieldModel()
     {
-        return $this->fieldValue ? Filepond::when($this->isOwnershipAware, fn($query) => $query->owned())
-            ->whereIn('id', collect($this->fieldValue)->pluck('id'))->get() : null;
-    }
-
-    public function field($field, bool $checkOwnership = true): self
-    {
-        $this->setFieldValue($field)
-            ->setTempDisk(config('filepond.temp_disk', 'local'))
-            ->setIsSoftDeletable(config('filepond.soft_delete', true))
-            ->setIsOwnershipAware($checkOwnership);
-        return $this;
+        return $this->fieldValue ? Filepond::whereIn('id', collect($this->fieldValue)->pluck('id'))->get() : null;
     }
 
     public function getFile()
     {
-        $files = $this->getFieldModel();
-        return $files ? $files->map(fn($filepond) => new UploadedFile(
+        return $this->fieldModel ? $this->fieldModel->map(fn($filepond) => new UploadedFile(
             Storage::disk($this->tempDisk)->path($filepond->filepath),
             $filepond->filename,
             $filepond->mimetypes,
@@ -63,17 +52,15 @@ class FilepondManager
 
     public function getDataURL()
     {
-        $files = $this->getFieldModel();
-        return $files ? $files->map(fn($filepond) => 'data:' . $filepond->mimetypes . ';base64,' . base64_encode(Storage::disk($this->tempDisk)->get($filepond->filepath)))->toArray() : null;
+        return $this->fieldModel ? $this->fieldModel->map(fn($filepond) => 'data:' . $filepond->mimetypes . ';base64,' . base64_encode(Storage::disk($this->tempDisk)->get($filepond->filepath)))->toArray() : null;
     }
 
     public function copyTo(string $path, string $disk = '', string $visibility = '')
     {
-        $files = $this->getFieldModel();
-        if (!$files) return null;
+        if (!$this->fieldModel) return null;
 
-        return $files->map(function ($filepond) use ($path, $disk, $visibility) {
-            $to = $path . '-' . ($filepond->id);
+        return $this->fieldModel->map(function ($filepond) use ($path, $disk, $visibility) {
+            $to = $path . '-' . $filepond->id;
             $storagePath = $to . '.' . $filepond->extension;
             $permanentDisk = $disk ?: $filepond->disk;
             Storage::disk($permanentDisk)->put($storagePath, Storage::disk($this->tempDisk)->get($filepond->filepath), $visibility);
@@ -81,17 +68,57 @@ class FilepondManager
         })->toArray();
     }
 
+    public function moveTo(string $path, string $disk = '', string $visibility = ''): ?array
+    {
+        if (!$this->fieldModel) return null;
+
+        $responses = [];
+        foreach ($this->fieldModel as $filepond) {
+            $newPath = $path . '-' . $filepond->id;
+            $fullPath = $newPath . '.' . ($filepond->extension ?: pathinfo($filepond->filename, PATHINFO_EXTENSION));
+            $permanentDisk = $disk ?: $filepond->disk;
+
+            Storage::disk($permanentDisk)->put($fullPath, Storage::disk($this->tempDisk)->get($filepond->filepath), $visibility);
+            $responses[] = $this->generateResponse($filepond, $fullPath, $permanentDisk);
+            $this->cleanUp($filepond);
+        }
+
+        return $this->isMultipleUpload ? $responses : $responses[0] ?? null;
+    }
+
+    private function generateResponse(Filepond $filepond, string $fullPath, string $disk): array
+    {
+        return [
+            'id' => $filepond->id,
+            'dirname' => dirname($fullPath),
+            'basename' => basename($fullPath),
+            'extension' => $filepond->extension ?: pathinfo($filepond->filename, PATHINFO_EXTENSION),
+            'filename' => basename($fullPath, '.' . $filepond->extension),
+            'location' => $fullPath,
+            'url' => Storage::disk($disk)->url($fullPath),
+        ];
+    }
+
+    private function cleanUp(Filepond $filepond): void
+    {
+        if (!$this->isSoftDeletable) {
+            Storage::disk($this->tempDisk)->delete($filepond->filepath);
+            $filepond->forceDelete();
+        } else {
+            $filepond->delete();
+        }
+    }
+
+
     public function delete(): void
     {
-        $files = $this->getFieldModel();
-        if (!$files) return;
-
-        $files->each(function ($filepond) {
+        if (!$this->fieldModel) return;
+        foreach ($this->fieldModel as $filepond) {
             $method = $this->isSoftDeletable ? 'delete' : 'forceDelete';
             $filepond->$method();
             if (!$this->isSoftDeletable) {
                 Storage::disk($this->tempDisk)->delete($filepond->filepath);
             }
-        });
+        }
     }
 }
