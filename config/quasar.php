@@ -21,116 +21,50 @@ return [
     'scriptspheres_secret' => '',
 
     'filepond' => [
-
+        /*
+          |--------------------------------------------------------------------------
+          | API middleware
+          |--------------------------------------------------------------------------
+          |
+          | The middleware to append to the filepond API routes
+          |
+          */
+        'middleware' => 'api',
 
         /*
         |--------------------------------------------------------------------------
-        | FilePond Permanent Disk
+        | Prefix
         |--------------------------------------------------------------------------
         |
-        | Set the FilePond default disk to be used for permanent file storage.
+        | The prefix to add to all filepond controller routes
         |
         */
-        'disk' => env('FILEPOND_DISK', 'public'),
+        'route_prefix' => 'filepond',
 
         /*
         |--------------------------------------------------------------------------
-        | FilePond Temporary Disk
+        | Temporary Path
         |--------------------------------------------------------------------------
         |
-        | Set the FilePond temporary disk and folder name to be used for temporary
-        | storage. This disk will be used for temporary file storage and cleared
-        | upon running the "artisan filepond:clear" command. It is recommended to
-        | use local disk for temporary storage when you want to take advantage of
-        | controller level validation. File validation from third party storage is
-        | not yet supported. However, global 'validation_rules' defined in this
-        | config will work fine.
+        | When initially uploading the files we store them in this path
+        | By default, it is stored on the local disk which defaults to `/storage/app/{temporary_files_path}`
         |
         */
-        'temp_disk' => 's3',
-        'temp_folder' => 'filepond/temp',
+        'temporary_files_path' => env('FILEPOND_TEMP_PATH', 'filepond'),
+        'temporary_files_disk' => env('FILEPOND_TEMP_DISK', 'local'),
 
         /*
         |--------------------------------------------------------------------------
-        | FilePond Routes Middleware
+        | Chunks path
         |--------------------------------------------------------------------------
         |
-        | Default middleware for FilePond routes.
+        | When using chunks, we want to place them inside of this folder.
+        | Make sure it is writeable.
+        | Chunks use the same disk as the temporary files do.
         |
         */
-        'middleware' => [
-            'web', 'auth',
-        ],
+        'chunks_path' => env('FILEPOND_CHUNKS_PATH', 'filepond' . DIRECTORY_SEPARATOR . 'chunks'),
 
-        /*
-        |--------------------------------------------------------------------------
-        | Soft Delete FilePond Model
-        |--------------------------------------------------------------------------
-        |
-        | Determine whether to enable or disable soft delete in FilePond model.
-        |
-        */
-        'soft_delete' => true,
-
-        /*
-        |--------------------------------------------------------------------------
-        | File Delete After (Minutes)
-        |--------------------------------------------------------------------------
-        |
-        | Set the minutes after which the FilePond temporary storage files will be
-        | deleted while running 'artisan filepond:clear' command.
-        |
-        */
-        'expiration' => 30,
-
-        /*
-        |--------------------------------------------------------------------------
-        | FilePond Controller
-        |--------------------------------------------------------------------------
-        |
-        | FilePond controller determines how the requests from FilePond library is
-        | processed.
-        |
-        */
-        'controller' => \Laltu\Quasar\Http\Controllers\FilepondController::class,
-
-        /*
-        |--------------------------------------------------------------------------
-        | FilePond Model
-        |--------------------------------------------------------------------------
-        |
-        | Set the filepond model to be used by the package. Make sure you extend
-        | the custom model with "\Laltu\Quasar\Models\Filepond" model.
-        |
-        */
-        'model' => \Laltu\Quasar\Models\Filepond::class,
-
-        /*
-        |--------------------------------------------------------------------------
-        | Global Validation Rules
-        |--------------------------------------------------------------------------
-        |
-        | Set the default validation for filepond's ./process route. In other words
-        | temporary file upload validation.
-        |
-        */
-        'validation_rules' => [
-            'required',
-            'file',
-            'max:5000',
-        ],
-
-        /*
-        |--------------------------------------------------------------------------
-        | FilePond Server Paths
-        |--------------------------------------------------------------------------
-        |
-        | Configure url for each of the FilePond actions.
-        | See details - https://pqina.nl/filepond/docs/patterns/api/server/
-        |
-        */
-        'server' => [
-            'url' => env('FILEPOND_URL', '/filepond'),
-        ],
+        'input_name' => 'file',
     ]
 ];

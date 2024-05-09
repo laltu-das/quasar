@@ -8,16 +8,12 @@ use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
 use Laltu\Quasar\Models\Filepond;
-use Throwable;
 
 class FilepondService
 {
     private $disk;
-
     private $tempDisk;
-
     private $tempFolder;
-
     private $model;
 
     public function __construct()
@@ -28,11 +24,6 @@ class FilepondService
         $this->model = config('filepond.model', Filepond::class);
     }
 
-    /**
-     * Validate the filepond file
-     *
-     * @return \Illuminate\Contracts\Validation\Validator
-     */
     public function validator(Request $request, array $rules)
     {
         $field = array_key_first(Arr::dot($request->all()));
@@ -40,14 +31,9 @@ class FilepondService
         return Validator::make($request->all(), [$field => $rules]);
     }
 
-    /**
-     * Store the uploaded file in the fileponds table
-     *
-     * @return string
-     */
-    public function store(Request $request)
+    public function store(Request $request): string
     {
-        $file = $this->getUploadedFile($request);
+        $file = $request->file(array_key_first(Arr::dot($request->all())));
 
         $filepond = $this->model::create([
             'filepath' => $file->store($this->tempFolder, $this->tempDisk),
@@ -62,25 +48,11 @@ class FilepondService
         return Crypt::encrypt(['id' => $filepond->id]);
     }
 
-
-    protected function getUploadedFile(Request $request)
-    {
-        $field = array_key_first(Arr::dot($request->all()));
-
-        return $request->file($field);
-    }
-
-
-    public function initChunk()
+    public function initChunk(): string
     {
         $filepond = $this->model::create([
-            'filepath' => '',
-            'filename' => '',
-            'extension' => '',
-            'mimetypes' => '',
-            'disk' => $this->disk,
-            'created_by' => auth()->id(),
-            'expires_at' => now()->addMinutes(config('filepond.expiration', 30)),
+            'filepath' => '', 'filename' => '', 'extension' => '', 'mimetypes' => '',
+            'disk' => $this->disk, 'created_by' => auth()->id(), 'expires_at' => now()->addMinutes(config('filepond.expiration', 30))
         ]);
 
         Storage::disk($this->tempDisk)->makeDirectory($this->tempFolder . '/' . $filepond->id);
@@ -88,93 +60,49 @@ class FilepondService
         return Crypt::encrypt(['id' => $filepond->id]);
     }
 
-
     public function chunk(Request $request): int|string
     {
         $id = Crypt::decrypt($request->patch)['id'];
-
         $dir = Storage::disk($this->tempDisk)->path($this->tempFolder . '/' . $id . '/');
-
         $filename = $request->header('Upload-Name');
-        $length = $request->header('Upload-Length');
-        $offset = $request->header('Upload-Offset');
+        file_put_contents($dir . $request->header('Upload-Offset'), $request->getContent());
 
-        file_put_contents($dir . $offset, $request->getContent());
+        $this->consolidateChunks($dir, $filename, $request->header('Upload-Length'));
 
-        $size = 0;
-        $chunks = glob($dir . '*');
-        foreach ($chunks as $chunk) {
-            $size += filesize($chunk);
-        }
+        $filepond = $this->model::where('id', $id)->firstOrFail();
+        $filepath = $this->tempFolder . '/' . $id . '/' . $filename;
+        $filepond->update([
+            'filepath' => $filepath,
+            'filename' => $filename,
+            'extension' => pathinfo($filename, PATHINFO_EXTENSION),
+            'mimetypes' => Storage::disk($this->tempDisk)->mimeType($filepath),
+            'disk' => $this->disk,
+            'created_by' => auth()->id(),
+            'expires_at' => now()->addMinutes(config('filepond.expiration', 30)),
+        ]);
 
-        if ($length == $size) {
-            $file = fopen($dir . $filename, 'w');
-            foreach ($chunks as $chunk) {
-                $offset = basename($chunk);
-
-                $chunkFile = fopen($chunk, 'r');
-                $chunkContent = fread($chunkFile, filesize($chunk));
-                fclose($chunkFile);
-
-                fseek($file, $offset);
-                fwrite($file, $chunkContent);
-
-                unlink($chunk);
-            }
-            fclose($file);
-
-            $filepond = $this->retrieve($request->patch);
-            $filepond->update([
-                'filepath' => $this->tempFolder . '/' . $id . '/' . $filename,
-                'filename' => $filename,
-                'extension' => pathinfo($filename, PATHINFO_EXTENSION),
-                'mimetypes' => Storage::disk($this->tempDisk)->mimeType($this->tempFolder . '/' . $id . '/' . $filename),
-                'disk' => $this->disk,
-                'created_by' => auth()->id(),
-                'expires_at' => now()->addMinutes(config('filepond.expiration', 30)),
-            ]);
-        }
-
-        return $size;
+        return $filepond->id;
     }
 
+    private function consolidateChunks($dir, $filename, $length): void
+    {
+        $file = fopen($dir . $filename, 'w');
+        foreach (glob($dir . '*') as $chunk) {
+            $offset = basename($chunk);
+            $chunkContent = file_get_contents($chunk);
+            fseek($file, $offset);
+            fwrite($file, $chunkContent);
+            unlink($chunk);
+        }
+        fclose($file);
+    }
 
     public function retrieve(string $content)
     {
-        $input = Crypt::decrypt($content);
-
-        return $this->model::where('id', $input['id'])->firstOrFail();
+        return $this->model::findOrFail(Crypt::decrypt($content)['id']);
     }
 
-
-    public function offset(string $content)
-    {
-        $filepond = $this->retrieve($content);
-
-        $dir = Storage::disk($this->tempDisk)->path($this->tempFolder . '/' . $filepond->id . '/');
-        $size = 0;
-        $chunks = glob($dir . '*');
-        foreach ($chunks as $chunk) {
-            $size += filesize($chunk);
-        }
-
-        return $size;
-    }
-
-
-    public function restore(string $content)
-    {
-        $filepond = $this->retrieve($content);
-
-        return [$filepond, Storage::disk($this->tempDisk)->get($filepond->filepath)];
-    }
-
-    /**
-     * Delete the filepond file and record respecting soft delete
-     *
-     * @return bool|null
-     */
-    public function delete(Filepond $filepond)
+    public function delete(Filepond $filepond): ?bool
     {
         if (config('filepond.soft_delete', true)) {
             return $filepond->delete();
@@ -186,4 +114,25 @@ class FilepondService
         return $filepond->forceDelete();
     }
 
+    public function offset(string $content): int
+    {
+        $filepond = $this->retrieve($content);
+        $dir = Storage::disk($this->tempDisk)->path($this->tempFolder . '/' . $filepond->id . '/');
+        $size = 0;
+        $chunks = glob($dir . '*');
+        foreach ($chunks as $chunk) {
+            $size += filesize($chunk);
+        }
+
+        return $size;
+    }
+
+    public function restore(string $content): array
+    {
+        $filepond = $this->retrieve($content);
+        $filepath = $this->tempFolder . '/' . $filepond->id . '/' . $filepond->filename;
+        $content = Storage::disk($this->tempDisk)->get($filepath);
+
+        return [$filepond, $content];
+    }
 }

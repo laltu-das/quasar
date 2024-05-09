@@ -6,19 +6,14 @@ use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Response;
 use Laltu\Quasar\Services\FilepondService;
+use Throwable;
 
 class FilepondController extends Controller
 {
-    /**
-     * FilePond ./process route logic.
-     *
-     * @return \Illuminate\Http\Response
-     */
     public function process(Request $request, FilepondService $service)
     {
-        // Check if chunk upload
-        if ($request->hasHeader('upload-length')) {
-            return Response::make($service->initChunk(), 200, ['content-type' => 'text/plain']);
+        if ($request->hasHeader('Upload-Length')) {
+            return Response::make($service->initChunk(), 200, ['Content-Type' => 'text/plain']);
         }
 
         $validator = $service->validator($request, config('filepond.validation_rules', []));
@@ -27,60 +22,38 @@ class FilepondController extends Controller
             return Response::make($validator->errors(), 422);
         }
 
-        return Response::make($service->store($request), 200, ['content-type' => 'text/plain']);
+        return Response::make($service->store($request), 200, ['Content-Type' => 'text/plain']);
     }
 
-    /**
-     * FilePond ./patch route logic.
-     *
-     * @return \Illuminate\Http\Response
-     *
-     * @throws \Throwable
-     */
     public function patch(Request $request, FilepondService $service)
     {
-        return Response::make('Ok', 200)->withHeaders(['Upload-Offset' => $service->chunk($request)]);
+        $offset = $service->chunk($request);
+        return Response::make('Ok', 200, ['Upload-Offset' => $offset]);
     }
 
-    /**
-     * FilePond ./head, ./restore route logic.
-     *
-     * @return \Illuminate\Http\Response
-     *
-     * @throws \Throwable
-     */
     public function head(Request $request, FilepondService $service)
     {
-        // If request has patch key, then its a head request
         if ($request->has('patch')) {
-            return Response::make('Ok', 200)->withHeaders(['Upload-Offset' => $service->offset($request->patch)]);
+            $offset = $service->offset($request->patch);
+            return Response::make('Ok', 200, ['Upload-Offset' => $offset]);
         }
 
-        // If request has restore key, then its a restore request
         if ($request->has('restore')) {
             [$filepond, $content] = $service->restore($request->restore);
-
-            return Response::make($content, 200)->withHeaders([
+            return Response::make($content, 200, [
                 'Access-Control-Expose-Headers' => 'Content-Disposition',
                 'Content-Type' => $filepond->mimetypes,
-                'Content-Disposition' => 'inline; filename="'.$filepond->filename.'"',
+                'Content-Disposition' => 'inline; filename="' . $filepond->filename . '"',
             ]);
         }
 
         return Response::make('Feature not implemented yet.', 406);
     }
 
-    /**
-     * FilePond ./revert route logic.
-     *
-     * @return \Illuminate\Http\Response
-     */
     public function revert(Request $request, FilepondService $service)
     {
         $filepond = $service->retrieve($request->getContent());
-
         $service->delete($filepond);
-
-        return Response::make('Ok', 200, ['content-type' => 'text/plain']);
+        return Response::make('Ok', 200, ['Content-Type' => 'text/plain']);
     }
 }
