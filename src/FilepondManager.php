@@ -8,7 +8,6 @@ use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\Storage;
 use Laltu\Quasar\Models\Filepond;
-use const UPLOAD_ERR_OK;
 
 class FilepondManager
 {
