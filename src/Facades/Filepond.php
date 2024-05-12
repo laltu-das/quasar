@@ -13,6 +13,7 @@ use Laltu\Quasar\FilepondManager;
  * @method static FilepondManager copyTo(string $path, string $disk = '', string $visibility = '')
  * @method static FilepondManager moveTo(string $path, string $disk = '', string $visibility = '')
  * @method static FilepondManager delete()
+ * @method static FilepondManager getFilesData()
  *
  * @see FilepondManager
  */

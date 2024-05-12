@@ -4,56 +4,81 @@ namespace Laltu\Quasar\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
-use Illuminate\Support\Facades\Response;
 use Laltu\Quasar\Services\FilepondService;
-use Throwable;
 
 class FilepondController extends Controller
 {
-    public function process(Request $request, FilepondService $service)
+    protected FilepondService $filepondService;
+
+    public function __construct(FilepondService $filepondService)
     {
-        if ($request->hasHeader('Upload-Length')) {
-            return Response::make($service->initChunk(), 200, ['Content-Type' => 'text/plain']);
-        }
-
-        $validator = $service->validator($request, config('filepond.validation_rules', []));
-
-        if ($validator->fails()) {
-            return Response::make($validator->errors(), 422);
-        }
-
-        return Response::make($service->store($request), 200, ['Content-Type' => 'text/plain']);
+        $this->filepondService = $filepondService;
     }
 
-    public function patch(Request $request, FilepondService $service)
+    // Process file upload
+    public function process(Request $request)
     {
-        $offset = $service->chunk($request);
-        return Response::make('Ok', 200, ['Upload-Offset' => $offset]);
+        try {
+            $fileId = $this->filepondService->store($request);
+            return response()->json(['id' => $fileId]);
+        } catch (\Exception $e) {
+            return response()->json(['error' => $e->getMessage()], 500);
+        }
     }
 
-    public function head(Request $request, FilepondService $service)
+    // Fetch file for FilePond input
+    public function fetch(Request $request)
     {
-        if ($request->has('patch')) {
-            $offset = $service->offset($request->patch);
-            return Response::make('Ok', 200, ['Upload-Offset' => $offset]);
+        try {
+            // Fetch the file using a URL provided by FilePond (from a remote source)
+            $fileContent = $this->filepondService->fetch($request->input('url'));
+            return response($fileContent);
+        } catch (\Exception $e) {
+            return response()->json(['error' => $e->getMessage()], 500);
         }
-
-        if ($request->has('restore')) {
-            [$filepond, $content] = $service->restore($request->restore);
-            return Response::make($content, 200, [
-                'Access-Control-Expose-Headers' => 'Content-Disposition',
-                'Content-Type' => $filepond->mimetypes,
-                'Content-Disposition' => 'inline; filename="' . $filepond->filename . '"',
-            ]);
-        }
-
-        return Response::make('Feature not implemented yet.', 406);
     }
 
-    public function revert(Request $request, FilepondService $service)
+    // Restore file from server
+    public function restore(Request $request, $id)
     {
-        $filepond = $service->retrieve($request->getContent());
-        $service->delete($filepond);
-        return Response::make('Ok', 200, ['Content-Type' => 'text/plain']);
+        try {
+            $fileContent = $this->filepondService->restore($id);
+            return response($fileContent);
+        } catch (\Exception $e) {
+            return response()->json(['error' => $e->getMessage()], 500);
+        }
+    }
+
+    // Revert upload (delete uploaded file)
+    public function revert(Request $request)
+    {
+        try {
+            $this->filepondService->delete($request->input('id'));
+            return response()->json(['success' => true]);
+        } catch (\Exception $e) {
+            return response()->json(['error' => $e->getMessage()], 500);
+        }
+    }
+
+    // Remove file
+    public function remove(Request $request)
+    {
+        try {
+            $this->filepondService->delete($request->input('id'));
+            return response()->json(['success' => true]);
+        } catch (\Exception $e) {
+            return response()->json(['error' => $e->getMessage()], 500);
+        }
+    }
+
+    // Load file from server
+    public function load(Request $request, $id)
+    {
+        try {
+            $fileContent = $this->filepondService->load($id);
+            return response($fileContent);
+        } catch (\Exception $e) {
+            return response()->json(['error' => $e->getMessage()], 500);
+        }
     }
 }

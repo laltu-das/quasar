@@ -14,6 +14,7 @@ class Filepond extends Model
         'filepath',
         'extension',
         'mimetypes',
+        'filesize',
         'disk',
         'expires_at',
     ];

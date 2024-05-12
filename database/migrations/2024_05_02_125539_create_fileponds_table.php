@@ -14,6 +14,7 @@ return new class extends Migration {
             $table->string('extension');
             $table->string('mimetypes');
             $table->string('disk');
+            $table->string('filesize');
             $table->string('expires_at');
             $table->softDeletes();
             $table->timestamps();
