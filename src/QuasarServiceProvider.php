@@ -3,7 +3,6 @@
 namespace Laltu\Quasar;
 
 use Exception;
-use Illuminate\Contracts\Support\Arrayable;
 use Illuminate\Support\ServiceProvider;
 use Laltu\Quasar\Console\FilepondClear;
 use Laltu\Quasar\Services\LicenseChecker;
