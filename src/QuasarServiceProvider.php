@@ -7,8 +7,6 @@ use Illuminate\Contracts\Http\Kernel;
 use Illuminate\Contracts\Support\Arrayable;
 use Illuminate\Routing\Router;
 use Illuminate\Support\ServiceProvider;
-use Inertia\Inertia;
-use Inertia\Response;
 use Inertia\ResponseFactory;
 use Laltu\Quasar\Console\FilepondClear;
 use Laltu\Quasar\Services\LicenseChecker;
@@ -20,10 +18,8 @@ class QuasarServiceProvider extends ServiceProvider
     /**
      * Bootstrap the application services.
      */
-    public function boot(Kernel $kernel, Router $router): void
+    public function boot(): void
     {
-        Inertia::setRootView('quasar::layout');
-
         ResponseFactory::macro('modal', function (string $component, array|Arrayable $props = []) {
             return new Modal($component, $props);
         });
@@ -39,8 +35,8 @@ class QuasarServiceProvider extends ServiceProvider
         /*
          * Optional methods to load your package assets
          */
-        $this->loadTranslationsFrom(__DIR__ . '/../resources/lang', 'quasar');
-        $this->loadViewsFrom(__DIR__ . '/../resources/views', 'quasar');
+//        $this->loadTranslationsFrom(__DIR__ . '/../resources/lang', 'quasar');
+//        $this->loadViewsFrom(__DIR__ . '/../resources/views', 'quasar');
         $this->loadMigrationsFrom(__DIR__ . '/../database/migrations');
         $this->loadRoutesFrom(__DIR__ . '/../routes/web.php');
 
