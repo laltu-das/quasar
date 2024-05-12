@@ -18,8 +18,7 @@
     "require": {
         "php": "^8.0|^8.1|^8.2",
         "illuminate/support": "^9.21|^10.0|^11.0",
-        "inertiajs/inertia-laravel": "^1.0",
-        "nwidart/laravel-modules": "*"
+        "inertiajs/inertia-laravel": "^1.0"
     },
     "require-dev": {
         "orchestra/testbench": "^7.0|^8.0|^9.0",
