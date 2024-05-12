@@ -3,11 +3,8 @@
 namespace Laltu\Quasar;
 
 use Exception;
-use Illuminate\Contracts\Http\Kernel;
 use Illuminate\Contracts\Support\Arrayable;
-use Illuminate\Routing\Router;
 use Illuminate\Support\ServiceProvider;
-use Inertia\ResponseFactory;
 use Laltu\Quasar\Console\FilepondClear;
 use Laltu\Quasar\Services\LicenseChecker;
 use Illuminate\Validation\Rule;
@@ -20,18 +17,6 @@ class QuasarServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        ResponseFactory::macro('modal', function (string $component, array|Arrayable $props = []) {
-            return new Modal($component, $props);
-        });
-
-        ResponseFactory::macro('dialog', function (string $component, array|Arrayable $props = []) {
-            return new Modal($component, $props);
-        });
-
-        Response::macro('stackable', function () {
-            return new Modal($this->component, $this->props);
-        });
-
         /*
          * Optional methods to load your package assets
          */
